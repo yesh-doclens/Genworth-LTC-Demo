@@ -1,79 +1,109 @@
 import streamlit as st
-import json 
-
-
-modelId = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
-# modelId = 'us.anthropic.claude-sonnet-4-5-20250929-v1:0'
-
-# print(response_text)
+import json
 from langchain_aws import ChatBedrockConverse
 
-llm = ChatBedrockConverse(
-    model_id=modelId,
-    region_name="us-east-2",
-    max_tokens=1500,
-    aws_access_key_id=st.session_state["aws_credentials"]["aws_access_key"],
-    aws_secret_access_key=st.session_state["aws_credentials"]["aws_secret_key"],
-    aws_session_token=st.session_state["aws_credentials"]["aws_session_token"],
-    # temperature=0,
-    # additional_model_request_fields={
-    #     "thinking": {"type": "enabled", "budget_tokens": 1024},
-    # },
-)
+def show_supplemental_page():
+    modelId = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
 
+    llm = ChatBedrockConverse(
+        model_id=modelId,
+        region_name="us-east-2",
+        max_tokens=1500,
+        aws_access_key_id=st.session_state["aws_credentials"]["aws_access_key"],
+        aws_secret_access_key=st.session_state["aws_credentials"]["aws_secret_key"],
+        aws_session_token=st.session_state["aws_credentials"]["aws_session_token"],
+    )
 
-st.logo("Doclens_logo.png", size="large")
+    with open("quote.json", "r") as f:
+        quote_data = json.load(f)
+    with open("application.md", "r") as f:
+        md = f.read()
 
-with open("quote.json", 'r') as f:
-    quote_data = json.load(f)
-with open("application.md", 'r') as f:
-    md = f.read()
-  
-st.set_page_config(layout="wide")
+    # --- High Level Sections ---
+    ni = quote_data.get("quotationRequest", {}).get("namedInsuredInformation", {})
+    
+    tab1, tab2, tab3 = st.tabs(["📊 **Overview**", "📄 **PDF & Data View**", "💬 **Chat**"])
 
-tab1, tab2 = st.tabs(["📄 **PDF & Data View**   ", "💬    **Chat**   "])
+    with tab1:
+        st.write("### Supplemental Application Overview")
+        
+        # Row 1: Insured Header (Large)
+        st.markdown(f"""
+        <div class="status-card" style="border-left: 5px solid #2563EB;">
+            <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">NAMED INSURED</div>
+            <div style="font-size: 1.4rem; font-weight: 700; margin: 4px 0;">{ni.get("nameOfInsured") or "Summit Peak Properties"}</div>
+            <div style="display: flex; gap: 20px; margin-top: 8px;">
+                <div><small style="color:#64748B;">Website</small><br><b>{ni.get("website") or "www.summitpeak.com"}</b></div>
+                <div><small style="color:#64748B;">FEIN</small><br><b>{ni.get("federalTaxId") or "843093126"}</b></div>
+                <div><small style="color:#64748B;">Years in Biz</small><br><b>{ni.get("yearsInBusiness") or "01"}</b></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
+        # Row 2: Operational Details
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            <div class="status-card">
+                <div style="font-weight: 600; color: #64748B; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">⚙️ Operations</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div style="grid-column: span 2;"><small style="color:#94A3B8;">Description</small><br><b>Steel reinforcing/rebar</b></div>
+                    <div><small style="color:#94A3B8;">Hours</small><br><b>7 to 7</b></div>
+                    <div><small style="color:#94A3B8;">Shifts</small><br><b>01</b></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+             st.markdown(f"""
+            <div class="status-card">
+                <div style="font-weight: 600; color: #64748B; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">🛡️ Risk & Safety</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div><small style="color:#94A3B8;">Payroll Liens</small><br><b style="color:#15803D;">No</b></div>
+                    <div><small style="color:#94A3B8;">Bankruptcy</small><br><b style="color:#15803D;">No</b></div>
+                    <div><small style="color:#94A3B8;">Safety Program</small><br><span class="status-tag" style="background-color: #DCFCE7; color: #166534;">ACTIVE</span></div>
+                    <div><small style="color:#94A3B8;">Compliance</small><br><b style="color:#15803D;">Yes</b></div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-with tab1:
-    col1, col2 = st.columns(spec=[2, 2], gap="xlarge", width=2000)
-    with col1 :
-    # st.subheader("*Document view*")
-        st.pdf("Limousine_Quotation_Application_Fleet_fillable.pdf", height=600)
-    # pdf_viewer("Limousine_Quotation_Application_Fleet_fillable.pdf", zoom_level=1.25)
-    with col2:
-        with st.container(height=600):
-            st.markdown(md)
+    with tab2:
+        col1, col2 = st.columns(spec=[1, 1], gap="medium")
+        with col1:
+            st.pdf("Limousine_Quotation_Application_Fleet_fillable.pdf", height=800)
+        with col2:
+            st.markdown("### Extracted Data Reference")
+            with st.container(height=800):
+                st.markdown(md)
 
-with tab2:
-    col1, col2 = st.columns(spec=[2, 2], gap="xlarge", width=2000)
-    with col1:
-        with st.container(height=600):
-            st.markdown(md)
-    with col2 :
-        st.subheader("Chat with data..")
-        if "csv_messages" not in st.session_state:
-            st.session_state.csv_messages = []
+    with tab3:
+        col1, col2 = st.columns(spec=[1, 1], gap="medium")
+        with col1:
+            st.markdown("### Data Reference")
+            with st.container(height=800):
+                st.markdown(md)
+        with col2:
+            st.markdown("### Chat with Supplemental Data")
+            if "csv_messages" not in st.session_state:
+                st.session_state.csv_messages = []
 
-        if custom_text := st.chat_input("Enter your query here..."):
-            print(custom_text)
-        with st.container(height=500):
-            if custom_text:
-
+            if custom_text := st.chat_input("Ask about the supplemental application...", key="supp_chat_input"):
                 prompt = custom_text
-                # Display user message in chat message container
                 with st.chat_message("user"):
-                        st.markdown(prompt)
+                    st.markdown(prompt)
                 with st.chat_message("assistant"):
-                    with st.spinner("Searching the data ..."):
+                    with st.spinner("Analyzing application..."):
                         response = llm.invoke(prompt + md)
-                    # response_text = re.sub(r'\$(.*)\$', r'\$\1\$',response[0]["text"])
                     st.markdown(response.content)
-                    print(response.content)
                     st.session_state.csv_messages.append({"role": "assistant", "content": response.content})
-                    # Add user message to chat history
                     st.session_state.csv_messages.append({"role": "user", "content": prompt})
 
-            # Display chat csv_messages from history on app rerun
-            for message in st.session_state.csv_messages[:-2][::-1]:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"])
+            # Display chat history
+            if len(st.session_state.csv_messages) >= 2:
+                for message in st.session_state.csv_messages[:-2][::-1]:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
+            elif len(st.session_state.csv_messages) > 0:
+                 for message in st.session_state.csv_messages[::-1]:
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])
