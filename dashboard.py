@@ -187,8 +187,8 @@ def show_dashboard():
         <table class="dash-table">
             <thead>
                 <tr>
-                    <th style="text-align: center;">Files Name</th>
-                    <th style="text-align: center; padding-left: 100px;">Claim Documents</th>
+                    <th style="text-align: center; padding-left: 75px;">Company</th>
+                    <th style="text-align: center; padding-left: 100px;">Documents Uploaded</th>
                     <th style="text-align: center; padding-left: 50px;">Uploaded At</th>
                     <th style="text-align: center;">Submission Score</th>
                 </tr>
