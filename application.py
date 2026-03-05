@@ -1,4 +1,5 @@
 import streamlit as st
+from main import get_pdf_base64
 import json
 from langchain_aws import ChatBedrockConverse
 
@@ -29,7 +30,7 @@ def show_supplemental_page():
         
         # Row 1: Insured Header (Large)
         st.markdown(f"""
-        <div class="status-card" style="border-left: 5px solid #2563EB;">
+        <div class="status-card" style="border-left: 5px solid #00c2c2;">
             <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">NAMED INSURED</div>
             <div style="font-size: 1.4rem; font-weight: 700; margin: 4px 0;">{ni.get("nameOfInsured") or "Summit Peak Properties"}</div>
             <div style="display: flex; gap: 20px; margin-top: 8px;">
@@ -55,24 +56,52 @@ def show_supplemental_page():
             """, unsafe_allow_html=True)
         
         with col2:
-             st.markdown(f"""
+            st.markdown(f"""
             <div class="status-card">
                 <div style="font-weight: 600; color: #64748B; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">🛡️ Risk & Safety</div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                    <div><small style="color:#94A3B8;">Payroll Liens</small><br><b style="color:#15803D;">No</b></div>
-                    <div><small style="color:#94A3B8;">Bankruptcy</small><br><b style="color:#15803D;">No</b></div>
+                    <div><small style="color:#94A3B8;">Payroll Liens</small><br><b style="color:#00c2c2;">No</b></div>
+                    <div><small style="color:#94A3B8;">Bankruptcy</small><br><b style="color:#00c2c2;">No</b></div>
                     <div><small style="color:#94A3B8;">Safety Program</small><br><span class="status-tag" style="background-color: #DCFCE7; color: #166534;">ACTIVE</span></div>
-                    <div><small style="color:#94A3B8;">Compliance</small><br><b style="color:#15803D;">Yes</b></div>
+                    <div><small style="color:#94A3B8;">Compliance</small><br><b style="color:#00c2c2;">Yes</b></div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
     with tab2:
-        col1, col2 = st.columns(spec=[1, 1], gap="medium")
-        with col1:
+        col_header, col_toggle = st.columns([2, 1])
+        with col_toggle:
+            view_mode = st.segmented_control(
+                "View Selection",
+                ["Show Input", "Show Extracted Data", "Show Both"],
+                # index=2,
+                # horizontal=True,
+                default="Show Both",
+                key="application_view_mode",
+                label_visibility="collapsed"
+            )
+
+        if view_mode == "Show Both":
+            st.markdown('<div class="split-view-container">', unsafe_allow_html=True)
+            col_left, col_right = st.columns([1, 1], gap="small")
+            with col_left:
+                pdf_path = "Limousine_Quotation_Application_Fleet_fillable.pdf"
+                # try:
+                #     pdf_base64 = get_pdf_base64(pdf_path)
+                #     # Using a more robust iframe embed with type and data
+                #     pdf_display = f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=0" type="application/pdf"></iframe></div>'
+                #     st.markdown(pdf_display, unsafe_allow_html=True)
+                # except Exception as e:
+                #     st.error(f"Error loading PDF: {e}")
+                #     st.pdf(pdf_path, height=800)
+                st.pdf(pdf_path, height=800)
+            with col_right:
+                with st.container(height=800):
+                    st.markdown(md)
+            st.markdown('</div>', unsafe_allow_html=True)
+        elif view_mode == "Show Input":
             st.pdf("Limousine_Quotation_Application_Fleet_fillable.pdf", height=800)
-        with col2:
-            st.markdown("### Extracted Data Reference")
+        elif view_mode == "Show Extracted Data":
             with st.container(height=800):
                 st.markdown(md)
 
@@ -83,7 +112,7 @@ def show_supplemental_page():
             with st.container(height=800):
                 st.markdown(md)
         with col2:
-            st.markdown("### Chat with Supplemental Data")
+            st.markdown("### Chat")
             if "csv_messages" not in st.session_state:
                 st.session_state.csv_messages = []
 

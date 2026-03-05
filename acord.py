@@ -1,4 +1,5 @@
 import streamlit as st
+from main import get_pdf_base64
 import pandas as pd
 import json
 import re
@@ -30,7 +31,7 @@ def show_acord_page():
         col_hdr1, col_hdr2, col_hdr3 = st.columns([1.5, 1, 1])
         with col_hdr1:
             st.markdown("""
-            <div class="status-card" style="border-left: 5px solid #2563EB;">
+            <div class="status-card" style="border-left: 5px solid #00c2c2;">
                 <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">FIRST NAMED INSURED</div>
                 <div style="font-size: 1.4rem; font-weight: 700; margin: 4px 0;">Blue Ridge Office Solution, LLC</div>
                 <div style="color: #475569; font-size: 0.9rem;">2450 Market Street, Suite 310, Denver, CO 80205</div>
@@ -40,7 +41,7 @@ def show_acord_page():
             st.markdown("""
             <div class="status-card" style="text-align: center;">
                 <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">PROPOSED PREMIUM</div>
-                <div style="font-size: 1.8rem; font-weight: 800; color: #15803D; margin: 8px 0;">$1,750</div>
+                <div style="font-size: 1.8rem; font-weight: 800; color: #00c2c2; margin: 8px 0;">$1,750</div>
                 <div style="font-size: 0.75rem; color: #64748B;">Minimum Policy Premium</div>
             </div>
             """, unsafe_allow_html=True)
@@ -108,7 +109,7 @@ def show_acord_page():
                     <div><small style="color:#94A3B8;">Annual Revenues</small><br><b>$1,850,000</b></div>
                     <div><small style="color:#94A3B8;">Full-Time Staff</small><br><b>8 Employees</b></div>
                     <div><small style="color:#94A3B8;">Occupied Area</small><br><b>3,200 sq ft</b></div>
-                    <div><small style="color:#94A3B8;">Safety Program</small><br><span style="color:#15803D; font-weight:600;">Active</span></div>
+                    <div><small style="color:#94A3B8;">Safety Program</small><br><span style="color:#00c2c2; font-weight:600;">Active</span></div>
                     <div><small style="color:#94A3B8;">Interest</small><br><b>Tenant</b></div>
                 </div>
             </div>
@@ -133,11 +134,32 @@ def show_acord_page():
                 """, unsafe_allow_html=True)
 
     with tab2:
-        col1, col2 = st.columns(spec=[1, 1], gap="medium")
-        with col1:
+        col_header, col_toggle = st.columns([2, 1])
+        with col_toggle:
+            view_mode = st.segmented_control(
+                "View Selection",
+                ["Show Input", "Show Extracted Data", "Show Both"],
+                # index=2,
+                # horizontal=True,
+                default="Show Both",
+                key="acord_view_mode",
+                label_visibility="collapsed"
+            )
+
+        if view_mode == "Show Both":
+            st.markdown('<div class="split-view-container">', unsafe_allow_html=True)
+            col_left, col_right = st.columns([1, 1], gap="small")
+            with col_left:
+                pdf_path = "Acord-125-Commercial-Insurance.pdf"
+                pdf_base64 = get_pdf_base64(pdf_path)
+                st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+            with col_right:
+                with st.container(height=800):
+                    st.markdown(md)
+            st.markdown('</div>', unsafe_allow_html=True)
+        elif view_mode == "Show Input":
             st.pdf("Acord-125-Commercial-Insurance.pdf", height=800)
-        with col2:
-            # st.markdown("### Extracted Content")
+        elif view_mode == "Show Extracted Data":
             with st.container(height=800):
                 st.markdown(md)
 

@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import re
 import plotly.express as px
-from main import ask_agent, configure_agent
+from main import ask_agent, configure_agent, get_pdf_base64
 
 def show_lossrun_page():
     CSV_FILE = "Loss Run.csv"
@@ -18,9 +18,9 @@ def show_lossrun_page():
         background-color: white !important;
         border: 1px solid #E2E8F0 !important;
         border-radius: 12px !important;
-        padding: 20px !important;
+        padding: 24px !important;
         margin-bottom: 24px !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] > div {
         padding: 0 !important;
@@ -40,7 +40,7 @@ def show_lossrun_page():
         st.session_state.filename = IMAGE_CSV_FILE
         df = pd.read_csv(IMAGE_CSV_FILE)
 
-    tab1, tab2, tab3 = st.tabs(["📊 **Overview**", "📄 **Document & Data View**", "💬 **Loss Run Agent**"])
+    tab1, tab2, tab3 = st.tabs(["📊 **Overview**", "📄 **Document & Data View**", "💬 **Chat**"])
 
     with tab1:
         # --- Robust Metrics Calculation ---
@@ -59,7 +59,7 @@ def show_lossrun_page():
         col_s1, col_s2, col_s3 = st.columns(3)
         with col_s1:
             st.markdown(f"""
-            <div class="status-card" style="text-align: center; border-top: 4px solid #2563EB;">
+            <div class="status-card" style="text-align: center; border-top: 4px solid #00c2c2;">
                 <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">TOTAL CLAIMS</div>
                 <div style="font-size: 2rem; font-weight: 800; color: #1E293B; margin: 8px 0;">{total_claims}</div>
                 <div style="font-size: 0.75rem; color: #64748B;">Distinct Claim Numbers</div>
@@ -67,17 +67,17 @@ def show_lossrun_page():
             """, unsafe_allow_html=True)
         with col_s2:
             st.markdown(f"""
-            <div class="status-card" style="text-align: center; border-top: 4px solid #15803D;">
+            <div class="status-card" style="text-align: center; border-top: 4px solid #ffb800;">
                 <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">TOTAL INCURRED</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #15803D; margin: 8px 0;">${total_incurred:,.0f}</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #ffb800; margin: 8px 0;">${total_incurred:,.0f}</div>
                 <div style="font-size: 0.75rem; color: #64748B;">Cumulative Loss Value</div>
             </div>
             """, unsafe_allow_html=True)
         with col_s3:
             st.markdown(f"""
-            <div class="status-card" style="text-align: center; border-top: 4px solid #EAB308;">
+            <div class="status-card" style="text-align: center; border-top: 4px solid #d92d20;">
                 <div style="font-size: 0.85rem; color: #64748B; font-weight: 600;">OPEN CLAIMS</div>
-                <div style="font-size: 2rem; font-weight: 800; color: #854D0E; margin: 8px 0;">{open_claims:02d}</div>
+                <div style="font-size: 2rem; font-weight: 800; color: #d92d20; margin: 8px 0;">{open_claims:02d}</div>
                 <div style="font-size: 0.75rem; color: #64748B;">Currently Active Claims</div>
             </div>
             """, unsafe_allow_html=True)
@@ -107,7 +107,7 @@ def show_lossrun_page():
                         names='Legend Label',
                         title="Frequency by Department",
                         hole=0.3,
-                        color_discrete_sequence=px.colors.qualitative.Pastel,
+                        color_discrete_sequence=['#00c2c2', '#ffb800', '#d92d20', '#343b4d', '#545b6d'],
                         template='plotly_white'
                     )
                     fig_dept.update_layout(
@@ -137,7 +137,7 @@ def show_lossrun_page():
                     title="Frequency by Primary Facility",
                     color='Facility',
                     text='Count',
-                    color_discrete_sequence=px.colors.qualitative.Prism,
+                    color_discrete_sequence=['#00c2c2', '#ffb800', '#d92d20'],
                     template='plotly_white'
                 )
                 fig_fac.update_layout(
@@ -165,7 +165,7 @@ def show_lossrun_page():
                     text_auto='.2s',
                     title="Top 10 Claims by Incurred Amount",
                     labels={'Claim Label': 'Claim Number', 'Total Incurred': 'Total Incurred ($)'},
-                    color_discrete_sequence=['#2563EB'],
+                    color_discrete_sequence=['#00c2c2'],
                     template='plotly_white'
                 )
                 fig_top.update_layout(
@@ -176,21 +176,45 @@ def show_lossrun_page():
                 st.plotly_chart(fig_top, use_container_width=True)
 
     with tab2:
-        if add_selectbox == IMAGE:
-            col1, col2 = st.columns(spec=[1, 1], gap="medium")
-            with col1:
+        col_header, col_toggle = st.columns([2, 1])
+        with col_toggle:
+            view_mode = st.segmented_control(
+                "View Selection",
+                ["Show Input", "Show Extracted Data", "Show Both"],
+                # index=2,
+                # horizontal=True,
+                default="Show Both",
+                key="lossrun_view_mode",
+                label_visibility="collapsed"
+            )
+
+        if view_mode == "Show Both":
+            st.markdown('<div class="split-view-container">', unsafe_allow_html=True)
+            col_left, col_right = st.columns([1, 1], gap="small")
+            with col_left:
+                if add_selectbox == IMAGE:
+                    pdf_base64 = get_pdf_base64(IMAGE)
+                    st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+                else:
+                    st.info("CSV Input is shown in the Extracted Data View.")
+            with col_right:
+                # st.write("#### Data View")
+                st.dataframe(df, hide_index=True, use_container_width=True)
+                if add_selectbox == CSV_FILE:
+                     st.subheader("Schema")
+                     st.write(df.columns.tolist())
+            st.markdown('</div>', unsafe_allow_html=True)
+        elif view_mode == "Show Input":
+            if add_selectbox == IMAGE:
                 st.pdf(IMAGE, height=800)
-            with col2:
-                st.write("#### Data Extraction Preview")
-                st.dataframe(df, hide_index=True, use_container_width=True)
-        elif add_selectbox == CSV_FILE:
-            csv_col1, csv_col2 = st.columns([3, 1])
-            with csv_col1:
-                st.write("#### Row Level Data")
-                st.dataframe(df, hide_index=True, use_container_width=True)
-            with csv_col2:
-                st.subheader("Schema")
-                st.write(df.columns.tolist())
+            else:
+                st.info("Input file is a CSV. Select 'Show Extracted Data' to view it.")
+        elif view_mode == "Show Extracted Data":
+            st.write("#### Data View")
+            st.dataframe(df, hide_index=True, use_container_width=True)
+            if add_selectbox == CSV_FILE:
+                 st.subheader("Schema")
+                 st.write(df.columns.tolist())
 
     with tab3:
         st.write("#### Interactive Loss Run Agent")

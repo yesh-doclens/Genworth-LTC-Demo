@@ -1,6 +1,11 @@
 # main.py
-import os, json
+import os, json, base64
 import pandas as pd
+
+def get_pdf_base64(pdf_path):
+    with open(pdf_path, "rb") as f:
+        base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+    return f"data:application/pdf;base64,{base64_pdf}"
 
 
 # --- 0) Load CSV ---
