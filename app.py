@@ -8,7 +8,7 @@ from dashboard import show_dashboard
 from disturbancies import show_disturbancies_page
 import base64
 # --- Page Configuration ---
-st.set_page_config(layout="wide", page_title="Summit Peak Insurance Agency Dashboard")
+st.set_page_config(layout="wide", page_title="DocLens SubmissionLens")
 
 # --- Custom CSS for Styling ---
 st.markdown(
