@@ -473,7 +473,7 @@ def main():
         with col_h1:
             st.caption(f"Submissions > {st.session_state["selected_submission"]} > {st.session_state['current_view']}")
             st.markdown(f"<h1>{st.session_state['selected_submission']} <span class='status-tag'>Incomplete ▾</span></h1>", unsafe_allow_html=True)
-            st.caption("SUB-000001 • Bill Brothers • Agent Name • 24 Sep 2026")
+            st.caption("SUB-000001 • 24 Feb 2026")
 
         with col_h2:
             st.write("##") # Spacer
