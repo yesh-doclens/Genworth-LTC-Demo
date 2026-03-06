@@ -48,16 +48,16 @@ def show_disturbancies_page():
     """, unsafe_allow_html=True)
 
     # Submissions Header (Matching other detailed pages)
-    st.caption(f"Submissions > {company_name} > Disturbancies")
-    st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 2rem; font-weight: 800;">{company_name}</span>
-        <span style="background-color: #FEF2F2; color: #DC2626; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #FCA5A5;">Incomplete ▾</span>
-    </div>
-    <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">SUB-000001 • Bill Brothers • Agent Name • 24 Sep 2026</div>
-    """, unsafe_allow_html=True)
+    # st.caption(f"Submissions > {company_name} > Disturbancies")
+    # st.markdown(f"""
+    # <div style="display: flex; align-items: center; gap: 12px;">
+    #     <span style="font-size: 2rem; font-weight: 800;">{company_name}</span>
+    #     <span style="background-color: #FEF2F2; color: #DC2626; padding: 4px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; border: 1px solid #FCA5A5;">Incomplete ▾</span>
+    # </div>
+    # <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px;">SUB-000001 • Bill Brothers • Agent Name • 24 Sep 2026</div>
+    # """, unsafe_allow_html=True)
     
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    # st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown('<div class="section-header-grey">Highlighted Disturbancies</div>', unsafe_allow_html=True)
 
     # Anomaly Data
