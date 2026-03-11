@@ -4,6 +4,7 @@ import pandas as pd
 import json
 import re
 from langchain_aws import ChatBedrockConverse
+from streamlit_pdf_viewer import pdf_viewer
 
 def show_acord_page():
     modelId = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
@@ -152,7 +153,8 @@ def show_acord_page():
             with col_left:
                 pdf_path = "Acord-125-Commercial-Insurance.pdf"
                 pdf_base64 = get_pdf_base64(pdf_path)
-                st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+                # st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+                pdf_viewer(pdf_path, height=800)
             with col_right:
                 with st.container(height=800):
                     st.markdown(md)

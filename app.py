@@ -409,8 +409,43 @@ def main():
             st.session_state["selected_submission"] = None
             st.rerun()
 
+        if st.session_state["current_view"] == "Dashboard":
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+        
         if st.session_state["selected_submission"]:
-            st.markdown('<p class="sidebar-category">Departments</p>', unsafe_allow_html=True)
+            st.markdown('<p class="sidebar-category">Uploads</p>', unsafe_allow_html=True)
             
             # ACORD Application
             is_acord_active = st.session_state["current_view"] == "ACORD Application"
@@ -433,13 +468,6 @@ def main():
                 st.session_state["sub_view"] = "Insured Details"
                 st.rerun()
 
-            # Account Research
-            is_research_active = st.session_state["current_view"] == "Account Research"
-            if st.button("🔍 Account Research", use_container_width=True, key="nav_research", disabled=is_research_active):
-                st.session_state["current_view"] = "Account Research"
-                st.session_state["sub_view"] = None
-                st.rerun()
-
             # st.markdown('<p class="sidebar-category">Communication</p>', unsafe_allow_html=True)
             is_emails_active = st.session_state["current_view"] == "Emails"
             if st.button("📧 Emails", use_container_width=True, key="nav_emails", disabled=is_emails_active):
@@ -447,7 +475,17 @@ def main():
                 st.session_state["sub_view"] = None
                 st.rerun()
 
+            st.markdown('<p class="sidebar-category">Enrichment</p>', unsafe_allow_html=True)
+
+            # Account Research
+            is_research_active = st.session_state["current_view"] == "Account Research"
+            if st.button("🔍 Account Research", use_container_width=True, key="nav_research", disabled=is_research_active):
+                st.session_state["current_view"] = "Account Research"
+                st.session_state["sub_view"] = None
+                st.rerun()
+            
             st.markdown('<p class="sidebar-category">Review</p>', unsafe_allow_html=True)
+
             is_comp_active = st.session_state["current_view"] == "Completeness Check"
             if st.button("✅ Completeness Check", use_container_width=True, disabled=is_comp_active):
                 st.session_state["current_view"] = "Completeness Check"
@@ -455,9 +493,9 @@ def main():
                 st.rerun()
 
             # Disturbancies
-            is_dist_active = st.session_state["current_view"] == "Disturbancies"
-            if st.button("⚠️ Disturbancies", use_container_width=True, disabled=is_dist_active):
-                st.session_state["current_view"] = "Disturbancies"
+            is_dist_active = st.session_state["current_view"] == "Discrepancies"
+            if st.button("⚠️ Discrepancies", use_container_width=True, disabled=is_dist_active):
+                st.session_state["current_view"] = "Discrepancies"
                 st.session_state["sub_view"] = None
                 st.rerun()
             
@@ -465,6 +503,8 @@ def main():
         if st.button("🔄 Change Credentials", use_container_width=True):
             st.session_state["aws_credentials"] = None
             st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     if st.session_state["selected_submission"]:
         # --- Header Section ---
@@ -501,7 +541,7 @@ def main():
         show_research_page()
     elif st.session_state["current_view"] == "Emails":
         show_emails_page()
-    elif st.session_state["current_view"] == "Disturbancies":
+    elif st.session_state["current_view"] == "Discrepancies":
         show_disturbancies_page()
 
 def show_completeness_dashboard():
@@ -548,7 +588,7 @@ def show_emails_page():
         <div class="email-header">
             <div style="display: flex; justify-content: space-between;">
                 <span style="font-weight: 700; font-size: 1.2rem;">New Commercial Auto Submission - Blue Ridge Office Solution, LLC</span>
-                <span style="color: #64748B;">Sep 24, 2026, 10:45 AM</span>
+                <span style="color: #64748B;">Feb 24, 2026, 10:45 AM</span>
             </div>
             <div style="margin-top: 12px;">
                 <span style="color: #64748B;">From:</span> <b style="color: #1E293B;">Sarah Ellis &lt;sarah.ellis@summitpeakins.com&gt;</b>

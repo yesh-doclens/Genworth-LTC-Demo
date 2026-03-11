@@ -58,7 +58,7 @@ def show_disturbancies_page():
     # """, unsafe_allow_html=True)
     
     # st.markdown("<br><br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-header-grey">Highlighted Disturbancies</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header-grey">Highlighted Discrepancies</div>', unsafe_allow_html=True)
 
     # Anomaly Data
     anomalies = [

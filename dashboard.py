@@ -113,9 +113,9 @@ def show_dashboard():
         st.markdown('<div class="section-header-grey">Submission Files Risk Distribution</div>', unsafe_allow_html=True)
         st.markdown("""
             <div style="display: flex; gap: 8px; margin-bottom: 40px;">
-                <span class="risk-badge risk-low">Low</span>
-                <span class="risk-badge risk-moderate">Moderate</span>
-                <span class="risk-badge risk-high">High</span>
+                <span class="risk-badge risk-low">Accept</span>
+                <span class="risk-badge risk-moderate">Maybe</span>
+                <span class="risk-badge risk-high">Reject</span>
             </div>
         """, unsafe_allow_html=True)
 
@@ -135,7 +135,7 @@ def show_dashboard():
 
     with col_right:
         # Donut Chart
-        labels = ['Low', 'Moderate', 'High']
+        labels = ['Accept', 'Maybe', 'Reject']
         values = [15, 7, 5]
         colors = ['#00c2c2', '#ffb800', '#d92d20']
 
@@ -163,13 +163,15 @@ def show_dashboard():
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # Submissions Table Section
-    st.markdown("""
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 0px;">
-            <div style="width: 300px;">
-                <input type="text" placeholder="Search Company" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF;">
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    # st.markdown("""
+    #     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 0px;">
+    #         <div style="width: 300px;">
+    #             <input type="text" placeholder="Search Company" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF;">
+    #         </div>
+    #     </div>
+    # """, unsafe_allow_html=True)
+
+    search_query = st.text_input("", placeholder="Search Company")
 
     # Mock Data
     data = [
@@ -182,6 +184,11 @@ def show_dashboard():
         {"name": "Harbor View Estates", "docs": "Loss Runs, ACORD 125", "date": "02/15/2026", "score": 6.2},
     ]
 
+    filtered_data = [
+        row for row in data
+        if search_query.lower() in row["name"].lower()
+    ] if search_query else data
+
     # Render Table Header (matching the User's modified header from Step 598)
     st.markdown("""
         <table class="dash-table">
@@ -190,22 +197,22 @@ def show_dashboard():
                     <th style="text-align: center; padding-left: 75px;">Company</th>
                     <th style="text-align: center; padding-left: 100px;">Documents Uploaded</th>
                     <th style="text-align: center; padding-left: 50px;">Uploaded At</th>
-                    <th style="text-align: center;">Submission Score</th>
+                    <th style="text-align: center;">Submission Review</th>
                 </tr>
             </thead>
             <tbody>
     """, unsafe_allow_html=True)
 
-    for i, item in enumerate(data):
+    for i, item in enumerate(filtered_data):
         score_val = item['score']
         if score_val < 3:
-            badge_text = "High"
+            badge_text = "Reject"
             badge_class = "score-high"
         elif score_val < 7:
-            badge_text = "Medium"
+            badge_text = "Maybe"
             badge_class = "score-medium"
         else:
-            badge_text = "Low"
+            badge_text = "Accept"
             badge_class = "score-low"
             
         cols = st.columns([2, 3, 1.5, 1.5])
@@ -221,6 +228,6 @@ def show_dashboard():
         with cols[2]:
             st.markdown(f'<div style="text-align: center; padding: 12px;">{item["date"]}</div>', unsafe_allow_html=True)
         with cols[3]:
-            st.markdown(f'<div style="text-align: center; padding: 12px;"><span class="score-badge {badge_class}">{badge_text} ({score_val})</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="text-align: center; padding: 12px;"><span class="score-badge {badge_class}">{badge_text}</span></div>', unsafe_allow_html=True)
 
     st.markdown("</tbody></table>", unsafe_allow_html=True)

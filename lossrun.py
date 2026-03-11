@@ -3,6 +3,7 @@ import pandas as pd
 import re
 import plotly.express as px
 from main import ask_agent, configure_agent, get_pdf_base64
+from streamlit_pdf_viewer import pdf_viewer
 
 def show_lossrun_page():
     CSV_FILE = "Loss Run.csv"
@@ -194,7 +195,8 @@ def show_lossrun_page():
             with col_left:
                 if add_selectbox == IMAGE:
                     pdf_base64 = get_pdf_base64(IMAGE)
-                    st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+                    # st.markdown(f'<div class="resizable-input-container"><iframe src="{pdf_base64}#toolbar=1" type="application/pdf"></iframe></div>', unsafe_allow_html=True)
+                    pdf_viewer(IMAGE, height=800, )
                 else:
                     st.info("CSV Input is shown in the Extracted Data View.")
             with col_right:

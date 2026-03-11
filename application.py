@@ -2,6 +2,7 @@ import streamlit as st
 from main import get_pdf_base64
 import json
 from langchain_aws import ChatBedrockConverse
+from streamlit_pdf_viewer import pdf_viewer
 
 def show_supplemental_page():
     modelId = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
@@ -94,7 +95,9 @@ def show_supplemental_page():
                 # except Exception as e:
                 #     st.error(f"Error loading PDF: {e}")
                 #     st.pdf(pdf_path, height=800)
-                st.pdf(pdf_path, height=800)
+                # st.pdf(pdf_path, height=800)
+                pdf_viewer(pdf_path, height=800)
+
             with col_right:
                 with st.container(height=800):
                     st.markdown(md)
