@@ -175,8 +175,8 @@ def show_dashboard():
 
     # Mock Data
     data = [
+        {"name": "Blue Ridge Office Solution", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 4.8},
         {"name": "Acme Properties", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 2.5},
-        {"name": "Blue Ridge Office Solution", "docs": "Acord-125, Driver List", "date": "02/19/2026", "score": 4.8},
         {"name": "Midnight Star Chauffeur", "docs": "Supplemental, Vehicle List", "date": "02/19/2026", "score": 1.2},
         {"name": "Summit West Insurance", "docs": "Acord-125, Loss Runs", "date": "02/18/2026", "score": 8.5},
         {"name": "Green Valley Logistics", "docs": "Acord-125, Supplemental", "date": "02/17/2026", "score": 5.9},

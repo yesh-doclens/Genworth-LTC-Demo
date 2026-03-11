@@ -7,6 +7,7 @@ from research import show_research_page
 from dashboard import show_dashboard
 from disturbancies import show_disturbancies_page
 import base64
+from universal_chat import classify_query, get_tab_context, get_universal_answer
 # --- Page Configuration ---
 st.set_page_config(layout="wide", page_title="DocLens SubmissionLens")
 
@@ -369,6 +370,12 @@ def main():
             "Supplemental Application": False
         }
 
+    if "universal_chat_response" not in st.session_state:
+        st.session_state["universal_chat_response"] = None
+    
+    if "chat_id" not in st.session_state:
+        st.session_state["chat_id"] = 0
+
     if st.session_state["aws_credentials"] is None:
         st.title("Welcome to Doclens Submissions")
         aws_access_key = st.text_input("Enter AWS Access Key", type="password")
@@ -522,7 +529,36 @@ def main():
             btn_col2.button("Generate Summary", type="primary", use_container_width=True, key="global_gen_sum")
 
         # --- AI Input Bar ---
-        st.text_input("✨ Ask anything", label_visibility="collapsed", placeholder="Ask anything related to this account...", key="global_ai_chat")
+        query = st.text_input("✨ Ask anything", label_visibility="collapsed", placeholder="Ask anything related to this account...", key=f"global_ai_chat_{st.session_state['chat_id']}")
+        
+        # Current stored response Query
+        stored_query = st.session_state["universal_chat_response"].get("query") if st.session_state["universal_chat_response"] else None
+        
+        if query and query != stored_query:
+            with st.spinner("Analyzing..."):
+                classification = classify_query(query, st.session_state["aws_credentials"])
+                category = classification.get("category", "GENERAL")
+                filters = classification.get("filters")
+                
+                context = get_tab_context(category, st.session_state["aws_credentials"], query, filters)
+                answer = get_universal_answer(query, category, context, st.session_state["aws_credentials"])
+                st.session_state["universal_chat_response"] = {
+                    "query": query,
+                    "category": category,
+                    "answer": answer
+                }
+                st.rerun()
+
+        if st.session_state["universal_chat_response"]:
+            resp = st.session_state["universal_chat_response"]
+            with st.container(border=True):
+                st.markdown(f"**Query:** {resp['query']}")
+                st.markdown(f"**Category:** `{resp['category']}`")
+                st.markdown(resp['answer'])
+                if st.button("Clear Answer"):
+                    st.session_state["universal_chat_response"] = None
+                    st.session_state["chat_id"] += 1
+                    st.rerun()
 
         st.divider()
 
