@@ -8,6 +8,8 @@ from dashboard import show_dashboard
 from disturbancies import show_disturbancies_page
 import base64
 from universal_chat import classify_query, get_tab_context, get_universal_answer
+from configurations import page
+import os
 # --- Page Configuration ---
 st.set_page_config(layout="wide", page_title="DocLens SubmissionLens")
 
@@ -403,7 +405,7 @@ def main():
                 <img src="data:image/png;base64,{}" width="120">
             </div>
             """.format(
-                base64.b64encode(open("Doclens_logo.png", "rb").read()).decode()
+                base64.b64encode(open("public/Doclens_logo.png", "rb").read()).decode()
             ),
             unsafe_allow_html=True,
         )
@@ -451,12 +453,15 @@ def main():
             st.write("")
             st.write("")
         
+        genworth_page = page == "genworth"
+
         if st.session_state["selected_submission"]:
             st.markdown('<p class="sidebar-category">Uploads</p>', unsafe_allow_html=True)
             
             # ACORD Application
             is_acord_active = st.session_state["current_view"] == "ACORD Application"
-            if st.button("📄 ACORD Application", use_container_width=True, key="nav_acord", disabled=is_acord_active):
+            page_name = "📄 ACORD Application" if not genworth_page else "📄 LTC Application"
+            if st.button(page_name, use_container_width=True, key="nav_acord", disabled=is_acord_active):
                 st.session_state["current_view"] = "ACORD Application"
                 st.session_state["sub_view"] = "Agency Information"
                 st.rerun()
@@ -470,14 +475,14 @@ def main():
 
             # Supplemental Application
             is_supp_active = st.session_state["current_view"] == "Supplemental Application"
-            if st.button("📝 Supplemental Application", use_container_width=True, key="nav_supp", disabled=is_supp_active):
+            if not genworth_page and st.button("📝 Supplemental Application", use_container_width=True, key="nav_supp", disabled=is_supp_active):
                 st.session_state["current_view"] = "Supplemental Application"
                 st.session_state["sub_view"] = "Insured Details"
                 st.rerun()
 
             # st.markdown('<p class="sidebar-category">Communication</p>', unsafe_allow_html=True)
             is_emails_active = st.session_state["current_view"] == "Emails"
-            if st.button("📧 Emails", use_container_width=True, key="nav_emails", disabled=is_emails_active):
+            if not genworth_page and st.button("📧 Emails", use_container_width=True, key="nav_emails", disabled=is_emails_active):
                 st.session_state["current_view"] = "Emails"
                 st.session_state["sub_view"] = None
                 st.rerun()
@@ -515,11 +520,20 @@ def main():
 
     if st.session_state["selected_submission"]:
         # --- Header Section ---
+        
+        logo_html = ""
+        if st.session_state["selected_submission"] == "Genworth Insurance":
+            logo_path = "public/genworth-logo.jpeg"
+            if os.path.exists(logo_path):
+                with open(logo_path, "rb") as f:
+                    data = base64.b64encode(f.read()).decode()
+                    logo_html = f'<img src="data:image/jpeg;base64,{data}" style="width: 150px; height: 150px; border-radius: 6px; margin-right: 12px; vertical-align: middle;">'
+
         col_h1, col_h2 = st.columns([3, 1.2])
 
         with col_h1:
-            st.caption(f"Submissions > {st.session_state["selected_submission"]} > {st.session_state['current_view']}")
-            st.markdown(f"<h1>{st.session_state['selected_submission']} <span class='status-tag'>Incomplete ▾</span></h1>", unsafe_allow_html=True)
+            st.caption(f"Submissions > {st.session_state['selected_submission']} > {st.session_state['current_view']}")
+            st.markdown(f"<h1>{logo_html}{st.session_state['selected_submission']} <span class='status-tag'>Incomplete ▾</span></h1>", unsafe_allow_html=True)
             st.caption("SUB-000001 • 24 Feb 2026")
 
         with col_h2:
@@ -540,8 +554,8 @@ def main():
                 category = classification.get("category", "GENERAL")
                 filters = classification.get("filters")
                 
-                context = get_tab_context(category, st.session_state["aws_credentials"], query, filters)
-                answer = get_universal_answer(query, category, context, st.session_state["aws_credentials"])
+                context = get_tab_context(category, st.session_state["aws_credentials"], query, genworth_page, filters)
+                answer = get_universal_answer(query, category, context, st.session_state["aws_credentials"], genworth_page)
                 st.session_state["universal_chat_response"] = {
                     "query": query,
                     "category": category,
@@ -582,38 +596,102 @@ def main():
 
 def show_completeness_dashboard():
     st.subheader("Completeness Check")
+    genworth_page = page != "genworth"
 
-    # Completeness Card
-    st.markdown("""
-    <div class="status-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; font-size: 1.1rem;">Improve this completeness</span>
-            <span class="badge-orange">2 / 3 checks passed</span>
-        </div>
-        <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-            <span><span style="color:#22C55E">●</span> <b>ACORD</b><br><small style="color:#64748B; margin-left:18px;">20 / 21 fields present</small></span>
-            <a class="view-link" href="#">View ></a>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-            <span><span style="color:#F59E0B">!</span> <b>Supplemental Application</b><br><small style="color:#C2410C; margin-left:18px;">12 / 28 fields present</small></span>
-            <a class="view-link" href="#">View ></a>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    if genworth_page:
+        # Completeness Card
+        with st.container(border=True):
+            st.markdown("""
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; font-size: 1.1rem;">Improve this completeness</span>
+                    <span class="badge-orange">2 / 3 checks passed</span>
+                </div>
+                <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+            """, unsafe_allow_html=True)
+            
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown('<span><span style="color:#22C55E">●</span> <b>ACORD Application</b><br><small style="color:#64748B; margin-left:18px;">20 / 21 fields present</small></span>', unsafe_allow_html=True)
+            with c2:
+                if st.button("View >", key="view_acord"):
+                    st.session_state["current_view"] = "ACORD Application"
+                    st.rerun()
 
-    # Validation Card
-    st.markdown("""
-    <div class="status-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: bold; font-size: 1.1rem;">Validation Checks</span>
-            <span class="badge-green">4 / 4 checks passed</span>
+            st.write("") # Spacer
+
+            c1, c2 = st.columns([4, 1])
+            with c1:
+                st.markdown('<span><span style="color:#F59E0B">!</span> <b>Supplemental Application</b><br><small style="color:#C2410C; margin-left:18px;">12 / 28 fields present</small></span>', unsafe_allow_html=True)
+            with c2:
+                if st.button("View >", key="view_supp"):
+                    st.session_state["current_view"] = "Supplemental Application"
+                    st.rerun()
+
+        # Validation Card
+        st.markdown("""
+        <div class="status-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 1.1rem;">Validation Checks</span>
+                <span class="badge-green">4 / 4 checks passed</span>
+            </div>
+            <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+            <p>✅ <b>Insured name validation</b><br><small style="color:#64748B; margin-left:25px;">Validating if all documents belong to same Insured</small></p>
+            <p>✅ <b>FEIN valid in ACORD</b><br><small style="color:#64748B; margin-left:25px;">The FEIN provided matches the required ACORD format (9 digits, no letters)</small></p>
         </div>
-        <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
-        <p>✅ <b>Insured name validation</b><br><small style="color:#64748B; margin-left:25px;">Validating if all documents belong to same Insured</small></p>
-        <p>✅ <b>FEIN valid in ACORD</b><br><small style="color:#64748B; margin-left:25px;">The FEIN provided matches the required ACORD format (9 digits, no letters)</small></p>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+    else:
+        # Completeness Card for Genworth
+        with st.container(border=True):
+            st.markdown("""
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; font-size: 1.1rem;">Improve this completeness</span>
+                    <span class="badge-red">15 Deficiencies Found</span>
+                </div>
+                <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+            """, unsafe_allow_html=True)
+
+            c1, c2 = st.columns([10, 1])
+            with c1:
+                st.markdown('<span><span style="color:#EF4444">!</span> <b>LTC Application (Jordan Taylor)</b><br><small style="color:#C2410C; margin-left:18px;">16 / 31 core fields present</small></span>', unsafe_allow_html=True)
+            with c2:
+                if st.button("View >", key="view_ltc"):
+                    st.session_state["current_view"] = "ACORD Application"
+                    st.rerun()
+
+            st.write("") # Spacer
+
+            c1, c2 = st.columns([10, 1])
+            with c1:
+                st.markdown('<span><span style="color:#EF4444">!</span> <b>Signatures & Authorizations</b><br><small style="color:#C2410C; margin-left:18px;">3 / 5 signed (HIPAA & Applicant missing)</small></span>', unsafe_allow_html=True)
+            with c2:
+                if st.button("View >", key="view_sig"):
+                    st.session_state["current_view"] = "ACORD Application" # Or another appropriate tab if available
+                    st.rerun()
+
+            st.write("") # Spacer
+
+            c1, c2 = st.columns([10, 1])
+            with c1:
+                st.markdown('<span><span style="color:#EF4444">!</span> <b>NY Addendums</b><br><small style="color:#C2410C; margin-left:18px;">Missing Home Care Disclosure & Replacement Notice</small></span>', unsafe_allow_html=True)
+            with c2:
+                if st.button("View >", key="view_ny"):
+                    st.session_state["current_view"] = "ACORD Application"
+                    st.rerun()
+
+        # Validation Card for Genworth
+        st.markdown("""
+        <div class="status-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: bold; font-size: 1.1rem;">Validation Checks</span>
+                <span class="badge-red">2 / 4 checks passed</span>
+            </div>
+            <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+            <p>✅ <b>Insured name validation</b><br><small style="color:#64748B; margin-left:25px;">Validating if all documents belong to Jordan A. Taylor</small></p>
+            <p style="color: #EF4444;">❌ <b>SSN Format validation</b><br><small style="color:#64748B; margin-left:25px;">SSN invalid format — only 8 digits (123-45-678)</small></p>
+            <p style="color: #EF4444;">❌ <b>Bank Routing number validation</b><br><small style="color:#64748B; margin-left:25px;">Bank routing number invalid — only 8 digits (02100002)</small></p>
+            <p>✅ <b>Email domain check</b><br><small style="color:#64748B; margin-left:25px;">Email format is non-standard but recognizable</small></p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def show_emails_page():
     st.subheader("Emails")

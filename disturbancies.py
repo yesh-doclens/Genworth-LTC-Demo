@@ -1,8 +1,10 @@
+from configurations import page
 import streamlit as st
 
 def show_disturbancies_page():
     # Use the same company name as other pages
     company_name = st.session_state.get("selected_submission", "Acme Properties")
+    genworth_page = page != "genworth"
     
     st.markdown("""
         <style>
@@ -61,32 +63,66 @@ def show_disturbancies_page():
     st.markdown('<div class="section-header-grey">Highlighted Discrepancies</div>', unsafe_allow_html=True)
 
     # Anomaly Data
-    anomalies = [
-        {
-            "title": "Unexpected Premium Drop",
-            "severity": "CRITICAL",
-            "desc": "The projected premium for 2026 shows a 45% decrease compared to previous loss runs, despite no significant change in exposure or vehicle count.",
-            "icon": "📉"
-        },
-        {
-            "title": "Missing Loss History (2023)",
-            "severity": "MAJOR",
-            "desc": "Loss run documents are missing data for the period of Jan 2023 - Dec 2023. Gap in historical claims coverage identified.",
-            "icon": "🔍"
-        },
-        {
-            "title": "Vehicle List Inconsistency",
-            "severity": "MINOR",
-            "desc": "The Supplemental application lists 15 vehicles, but the ACORD 125 only accounts for 14. One VIN appears to be duplicate or missing.",
-            "icon": "🚗"
-        },
-        {
-            "title": "Outdated Safety Manual",
-            "severity": "MINOR",
-            "desc": "The uploaded Safety & Training Manual hasn't been updated since 2018. Recent regulatory compliance standards may not be met.",
-            "icon": "📋"
-        }
-    ]
+    if genworth_page:
+        anomalies = [
+            {
+                "title": "Unexpected Premium Drop",
+                "severity": "CRITICAL",
+                "desc": "The projected premium for 2026 shows a 45% decrease compared to previous loss runs, despite no significant change in exposure or vehicle count.",
+                "icon": "📉"
+            },
+            {
+                "title": "Missing Loss History (2023)",
+                "severity": "MAJOR",
+                "desc": "Loss run documents are missing data for the period of Jan 2023 - Dec 2023. Gap in historical claims coverage identified.",
+                "icon": "🔍"
+            },
+            {
+                "title": "Vehicle List Inconsistency",
+                "severity": "MINOR",
+                "desc": "The Supplemental application lists 15 vehicles, but the ACORD 125 only accounts for 14. One VIN appears to be duplicate or missing.",
+                "icon": "🚗"
+            },
+            {
+                "title": "Outdated Safety Manual",
+                "severity": "MINOR",
+                "desc": "The uploaded Safety & Training Manual hasn't been updated since 2018. Recent regulatory compliance standards may not be met.",
+                "icon": "📋"
+            }
+        ]
+    else:
+        anomalies = [
+            {
+                "title": "Incomplete Applicant Details",
+                "severity": "CRITICAL",
+                "desc": "SSN is in an invalid format (8 digits: 123-45-678). Applicant signature is missing from the main application and HIPAA authorization.",
+                "icon": "👤"
+            },
+            {
+                "title": "Payment Information Errors",
+                "severity": "CRITICAL",
+                "desc": "Bank routing number (02100002) is invalid (only 8 digits). Premium marked as 'affordable' = NO without required explanation.",
+                "icon": "💰"
+            },
+            {
+                "title": "Missing Medical Documentation",
+                "severity": "MAJOR",
+                "desc": "Applicant answered YES to prescription medications but did not provide the required medication list (name, dosage, condition).",
+                "icon": "💊"
+            },
+            {
+                "title": "Functional Assessment Gap",
+                "severity": "MAJOR",
+                "desc": "ADL 'Bathing' was selected, but no narrative was provided describing the frequency or nature of assistance required.",
+                "icon": "♿"
+            },
+             {
+                "title": "Missing NY State Addendums",
+                "severity": "CRITICAL",
+                "desc": "The NY Home Care Disclosure and Replacement Notice are either not attached or not executed.",
+                "icon": "🗽"
+            }
+        ]
 
     # Render Disturbancy Cards
     for item in anomalies:

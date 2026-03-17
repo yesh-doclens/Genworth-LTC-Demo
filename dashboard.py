@@ -1,8 +1,19 @@
+from configurations import page
+import base64
+import os
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 
+def get_base64_image(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
 def show_dashboard():
+    genworth_page = page != "genworth"
+    
     st.markdown("""
         <style>
         .dashboard-header {
@@ -97,6 +108,13 @@ def show_dashboard():
             color: #00c2c2 !important;
             text-decoration: underline !important;
         }
+        .company-logo {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -125,18 +143,18 @@ def show_dashboard():
         m_col1, m_col2, m_col3 = st.columns(3)
         with m_col1:
             st.markdown('<div class="metric-label-grey">Submission Files</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-value-large">27</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-value-large">{"27" if genworth_page else "1"}</div>', unsafe_allow_html=True)
         with m_col2:
             st.markdown('<div class="metric-label-grey">Submission Documents</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-value-large">1531</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-value-large">{"1531" if genworth_page else "5"}</div>', unsafe_allow_html=True)
         with m_col3:
             st.markdown('<div class="metric-label-grey">Total Pages</div>', unsafe_allow_html=True)
-            st.markdown('<div class="metric-value-large">14665</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-value-large">{"14665" if genworth_page else "42"}</div>', unsafe_allow_html=True)
 
     with col_right:
         # Donut Chart
         labels = ['Accept', 'Maybe', 'Reject']
-        values = [15, 7, 5]
+        values = [15, 7, 5] if genworth_page else [0, 0, 1]
         colors = ['#00c2c2', '#ffb800', '#d92d20']
 
         fig = go.Figure(data=[go.Pie(
@@ -152,7 +170,7 @@ def show_dashboard():
             annotations=[dict(
                 text='<span style="font-size: 24px; color: #343B4D;">📄</span><br>'
                      '<span style="font-size: 0.85rem; color: #475569; font-weight: 600; padding-top: 100px;">Total Submission Files</span><br><br>'
-                     '<span style="font-size: 1.5rem; color: #1E293B; font-weight: 800;">27</span>',
+                     f'<span style="font-size: 1.5rem; color: #1E293B; font-weight: 800;">{"27" if genworth_page else "1"}</span>',
                 x=0.5, y=0.5, showarrow=False, align='center'
             )],
             margin=dict(l=0, r=0, t=0, b=0),
@@ -162,34 +180,30 @@ def show_dashboard():
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    # Submissions Table Section
-    # st.markdown("""
-    #     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 40px; margin-bottom: 0px;">
-    #         <div style="width: 300px;">
-    #             <input type="text" placeholder="Search Company" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0; background: #FFFFFF;">
-    #         </div>
-    #     </div>
-    # """, unsafe_allow_html=True)
-
     search_query = st.text_input("", placeholder="Search Company")
 
     # Mock Data
-    data = [
-        {"name": "Blue Ridge Office Solution", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 4.8},
-        {"name": "Acme Properties", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 2.5},
-        {"name": "Midnight Star Chauffeur", "docs": "Supplemental, Vehicle List", "date": "02/19/2026", "score": 1.2},
-        {"name": "Summit West Insurance", "docs": "Acord-125, Loss Runs", "date": "02/18/2026", "score": 8.5},
-        {"name": "Green Valley Logistics", "docs": "Acord-125, Supplemental", "date": "02/17/2026", "score": 5.9},
-        {"name": "Pioneer Tech Group", "docs": "Acord-126, Driver List", "date": "02/16/2026", "score": 9.1},
-        {"name": "Harbor View Estates", "docs": "Loss Runs, ACORD 125", "date": "02/15/2026", "score": 6.2},
-    ]
+    if genworth_page:
+        data = [
+            {"name": "Blue Ridge Office Solution", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 4.8},
+            {"name": "Acme Properties", "docs": "Acord-125, Loss Runs, Supplemental", "date": "02/19/2026", "score": 2.5},
+            {"name": "Midnight Star Chauffeur", "docs": "Supplemental, Vehicle List", "date": "02/19/2026", "score": 1.2},
+            {"name": "Summit West Insurance", "docs": "Acord-125, Loss Runs", "date": "02/18/2026", "score": 8.5},
+            {"name": "Green Valley Logistics", "docs": "Acord-125, Supplemental", "date": "02/17/2026", "score": 5.9},
+            {"name": "Pioneer Tech Group", "docs": "Acord-126, Driver List", "date": "02/16/2026", "score": 9.1},
+            {"name": "Harbor View Estates", "docs": "Loss Runs, ACORD 125", "date": "02/15/2026", "score": 6.2},
+        ]
+    else:
+        data = [
+            {"name": "Genworth Insurance", "docs": "LTC Application, Medical Records", "date": "03/17/2026", "score": 2.1},
+        ]
 
     filtered_data = [
         row for row in data
         if search_query.lower() in row["name"].lower()
     ] if search_query else data
 
-    # Render Table Header (matching the User's modified header from Step 598)
+    # Render Table Header
     st.markdown("""
         <table class="dash-table">
             <thead>
@@ -202,6 +216,8 @@ def show_dashboard():
             </thead>
             <tbody>
     """, unsafe_allow_html=True)
+
+    logo_b64 = get_base64_image("public/genworth-logo.jpeg")
 
     for i, item in enumerate(filtered_data):
         score_val = item['score']
@@ -217,7 +233,8 @@ def show_dashboard():
             
         cols = st.columns([2, 3, 1.5, 1.5])
         with cols[0]:
-            st.markdown('<div class="company-name-btn">', unsafe_allow_html=True)
+            st.markdown('<div class="company-name-btn" style="display: flex; align-items: center;">', unsafe_allow_html=True)
+            
             if st.button(item['name'], key=f"select_{i}", use_container_width=True):
                 st.session_state["selected_submission"] = item['name']
                 st.session_state["current_view"] = "Completeness Check"
