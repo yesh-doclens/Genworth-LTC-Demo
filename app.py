@@ -6,6 +6,7 @@ from lossrun import show_lossrun_page
 from research import show_research_page
 from dashboard import show_dashboard
 from disturbancies import show_disturbancies_page
+from supporting_docs import show_supporting_docs_page
 import base64
 from universal_chat import classify_query, get_tab_context, get_universal_answer
 from configurations import page
@@ -405,7 +406,7 @@ def main():
                 <img src="data:image/png;base64,{}" width="120">
             </div>
             """.format(
-                base64.b64encode(open("public/Doclens_logo.png", "rb").read()).decode()
+                base64.b64encode(open("public/genworth-logo.jpeg", "rb").read()).decode()
             ),
             unsafe_allow_html=True,
         )
@@ -452,6 +453,7 @@ def main():
             st.write("")
             st.write("")
             st.write("")
+            
         
         genworth_page = page == "genworth"
 
@@ -460,15 +462,22 @@ def main():
             
             # ACORD Application
             is_acord_active = st.session_state["current_view"] == "ACORD Application"
-            page_name = "📄 ACORD Application" if not genworth_page else "📄 LTC Application"
+            page_name = "📄 ACORD Application" if not genworth_page else "📄 Application Form"
             if st.button(page_name, use_container_width=True, key="nav_acord", disabled=is_acord_active):
                 st.session_state["current_view"] = "ACORD Application"
                 st.session_state["sub_view"] = "Agency Information"
                 st.rerun()
 
+            # Supporting Documents
+            is_supp_docs_active = st.session_state["current_view"] == "Supporting Documents"
+            if genworth_page and st.button("📁 Supporting Documents", use_container_width=True, key="nav_supp_docs", disabled=is_supp_docs_active):
+                st.session_state["current_view"] = "Supporting Documents"
+                st.session_state["sub_view"] = None
+                st.rerun()
+
             # Loss Run Insights
             is_loss_active = st.session_state["current_view"] == "Loss Run Insights"
-            if st.button("📉 Loss Run Insights", use_container_width=True, key="nav_lossrun", disabled=is_loss_active):
+            if not genworth_page and st.button("📉 Loss Run Insights", use_container_width=True, key="nav_lossrun", disabled=is_loss_active):
                 st.session_state["current_view"] = "Loss Run Insights"
                 st.session_state["sub_view"] = "History"
                 st.rerun()
@@ -487,14 +496,14 @@ def main():
                 st.session_state["sub_view"] = None
                 st.rerun()
 
-            st.markdown('<p class="sidebar-category">Enrichment</p>', unsafe_allow_html=True)
+            # st.markdown('<p class="sidebar-category">Enrichment</p>', unsafe_allow_html=True)
 
-            # Account Research
-            is_research_active = st.session_state["current_view"] == "Account Research"
-            if st.button("🔍 Account Research", use_container_width=True, key="nav_research", disabled=is_research_active):
-                st.session_state["current_view"] = "Account Research"
-                st.session_state["sub_view"] = None
-                st.rerun()
+            # # Account Research
+            # is_research_active = st.session_state["current_view"] == "Account Research"
+            # if st.button("🔍 Account Research", use_container_width=True, key="nav_research", disabled=is_research_active):
+            #     st.session_state["current_view"] = "Account Research"
+            #     st.session_state["sub_view"] = None
+            #     st.rerun()
             
             st.markdown('<p class="sidebar-category">Review</p>', unsafe_allow_html=True)
 
@@ -510,13 +519,38 @@ def main():
                 st.session_state["current_view"] = "Discrepancies"
                 st.session_state["sub_view"] = None
                 st.rerun()
-            
+
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+        
         st.divider()
         if st.button("🔄 Change Credentials", use_container_width=True):
             st.session_state["aws_credentials"] = None
             st.rerun()
 
         st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            """
+            <div style="text-align: center;">
+                <img src="data:image/png;base64,{}" width="50">
+            </div>
+            """.format(
+                base64.b64encode(open("public/Doclens_logo.png", "rb").read()).decode()
+            ),
+            unsafe_allow_html=True,
+        )
 
     if st.session_state["selected_submission"]:
         # --- Header Section ---
@@ -593,6 +627,8 @@ def main():
         show_emails_page()
     elif st.session_state["current_view"] == "Discrepancies":
         show_disturbancies_page()
+    elif st.session_state["current_view"] == "Supporting Documents":
+        show_supporting_docs_page()
 
 def show_completeness_dashboard():
     st.subheader("Completeness Check")
@@ -640,58 +676,264 @@ def show_completeness_dashboard():
         </div>
         """, unsafe_allow_html=True)
     else:
-        # Completeness Card for Genworth
-        with st.container(border=True):
+        # Custom tab switcher to allow programmatic selection
+        tab_names = [
+            "📋 Overview", 
+            "👤 Identity & Legal", 
+            "🩺 Health & Medical", 
+            "♿ Functional", 
+            "📄 Product & Suitability", 
+            "💳 Payment & Compliance", 
+            "🚩 NIGO & Risk"
+        ]
+        
+        if "completeness_active_tab" not in st.session_state:
+            st.session_state["completeness_active_tab"] = tab_names[0]
+            
+        # CSS for custom tabs
+        st.markdown("""
+            <style>
+            .stButton > button.active-tab {
+                background-color: #F1F5F9 !important;
+                border-bottom: 2px solid #00c2c2 !important;
+                border-radius: 0 !important;
+                color: #0F172A !important;
+                font-weight: 700 !important;
+            }
+            .tab-container {
+                display: flex;
+                overflow-x: auto;
+                gap: 4px;
+                border-bottom: 1px solid #E2E8F0;
+                margin-bottom: 24px;
+            }
+            </style>
+        """, unsafe_allow_html=True)
+        
+        # Render tabs
+        tabs_cols = st.columns(len(tab_names))
+        for idx, name in enumerate(tab_names):
+            with tabs_cols[idx]:
+                is_active = st.session_state["completeness_active_tab"] == name
+                if st.button(name, key=f"tab_{idx}", use_container_width=True, type="secondary" if not is_active else "primary"):
+                    st.session_state["completeness_active_tab"] = name
+                    st.rerun()
+
+        active_tab = st.session_state["completeness_active_tab"]
+
+        if active_tab == tab_names[0]: # Overview
+            # Completeness Card for Genworth
+            with st.container(border=True):
+                st.markdown("""
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 1.1rem;">Improve application completeness</span>
+                        <span class="badge-red">~13 Critical Deficiencies Found</span>
+                    </div>
+                    <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+                """, unsafe_allow_html=True)
+
+                sections = [
+                    ("Applicant Demographics", "11 / 13", "Missing SSN format, email format", "#F59E0B"),
+                    ("Coverage & Benefit Design", "8 / 8", "Complete", "#22C55E"),
+                    ("Premium & Payment", "8 / 8", "Routing # flagged", "#F59E0B"),
+                    ("Existing Coverage & Replacement", "2 / 4", "Missing carrier/policy #, replacement reason", "#EF4444"),
+                    ("Health & Underwriting", "6 / 6", "Accuracy disputed (Tobacco/Nicotine)", "#F59E0B"),
+                    ("Prescription Medications (5A)", "0 / 1", "Medication list not provided", "#EF4444"),
+                    ("Functional Assessment (ADL)", "1 / 2", "Bathing narrative missing", "#EF4444"),
+                    ("Financial Suitability", "5 / 6", "Hardship explanation missing", "#EF4444"),
+                    ("Authorizations & Notices", "3 / 4", "HIPAA Authorization missing", "#EF4444"),
+                    ("Advisor/Producer Info", "5 / 6", "NPN/License # missing", "#EF4444"),
+                    ("Signatures", "1 / 2", "Applicant signature missing", "#EF4444"),
+                    ("State Addenda (NY)", "0 / 3", "Missing Home Care Disclosure & Replacement Notice", "#EF4444"),
+                ]
+
+                # Navigation: All point to Application Form PDF view
+                for i, (name, count, detail, color) in enumerate(sections):
+                    c1, c2 = st.columns([10, 1])
+                    with c1:
+                        icon = "●" if color == "#22C55E" else "!"
+                        st.markdown(f'<span><span style="color:{color}">{icon}</span> <b>{name}</b><br><small style="color:#64748B; margin-left:18px;">{count} fields • {detail}</small></span>', unsafe_allow_html=True)
+                    with c2:
+                        if st.button("View >", key=f"view_sec_{i}", use_container_width=True):
+                            st.session_state["current_view"] = "ACORD Application"
+                            st.session_state["acord_active_tab"] = "📄 PDF & Data View"
+                            st.rerun()
+                    if i < len(sections) - 1:
+                        st.write("") # Spacer
+
+            # Validation Card for Genworth
             st.markdown("""
+            <div class="status-card">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: bold; font-size: 1.1rem;">Improve this completeness</span>
-                    <span class="badge-red">15 Deficiencies Found</span>
+                    <span style="font-weight: bold; font-size: 1.1rem;">Risk & Integrity Summary</span>
+                    <span class="badge-red">Multiple Discrepancies</span>
                 </div>
                 <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
+                <p style="color: #EF4444;">❌ <b>Material Discrepancy: Tobacco/Nicotine</b><br><small style="color:#64748B; margin-left:25px;">Application says 'No', but Rx records show nicotine patch claims (10/2025)</small></p>
+                <p style="color: #F59E0B;">⚠️ <b>Disclosure Gap: Fall History</b><br><small style="color:#64748B; margin-left:25px;">Fall in shower (09/2025) noted in APS but not disclosed on application</small></p>
+                <p style="color: #EF4444;">❌ <b>Identity Check: Invalid SSN</b><br><small style="color:#64748B; margin-left:25px;">SSN provided has only 8 digits (123-45-678)</small></p>
+                <p style="color: #EF4444;">❌ <b>Financial Check: Invalid Routing #</b><br><small style="color:#64748B; margin-left:25px;">Bank routing number has only 8 digits (02100002)</small></p>
+            </div>
             """, unsafe_allow_html=True)
 
-            c1, c2 = st.columns([10, 1])
-            with c1:
-                st.markdown('<span><span style="color:#EF4444">!</span> <b>LTC Application (Jordan Taylor)</b><br><small style="color:#C2410C; margin-left:18px;">16 / 31 core fields present</small></span>', unsafe_allow_html=True)
-            with c2:
-                if st.button("View >", key="view_ltc"):
-                    st.session_state["current_view"] = "ACORD Application"
-                    st.rerun()
+        elif active_tab == tab_names[1]: # Identity
+            st.write("### Identity Verification Matrix")
+            st.markdown("""
+            | Data Point | Application | APS/PCP | Rx History | Functional Interview | Status |
+            |---|---|---|---|---|---|
+            | Full Name | Jordan A. Taylor | — | Jordan A. Taylor | Pat Taylor (spouse) | ✅ Consistent |
+            | DOB | 07/14/1961 | — | 07/14/1961 | — | ✅ Match |
+            | SSN | 123-45-678 | — | — | — | ❌ Invalid |
+            | Address | 115 W 57th St, NY | — | — | Apartment confirmed | ✅ Consistent |
+            """)
+            
+            st.write("### Ownership & Beneficiary")
+            col_legal1, col_legal2 = st.columns(2)
+            with col_legal1:
+                 st.markdown("""
+                <div class="status-card">
+                    <p>✅ <b>Owner = Insured</b><br><small style="color:#64748B;">Assumed based on no separate owner listed</small></p>
+                    <p>❌ <b>Beneficiary Designation</b><br><small style="color:#64748B;">No beneficiary section completed</small></p>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_legal2:
+                 st.markdown("""
+                <div class="status-card">
+                    <p>❌ <b>Third-party Lapse Designee</b><br><small style="color:#64748B;">NY requirement not addressed</small></p>
+                    <p>⚠️ <b>Spouse Insurable Interest</b><br><small style="color:#64748B;">Pat Taylor involved in care — not co-applicant</small></p>
+                </div>
+                """, unsafe_allow_html=True)
 
-            st.write("") # Spacer
+        elif active_tab == tab_names[2]: # Health
+            st.write("### Health Question Accuracy Review")
+            st.markdown("""
+            | Health Question | Application | Evidence | Discrepancy? |
+            |---|---|---|---|
+            | Neuro conditions | No | Normal Cognition | ✅ Consistent |
+            | ADL Assistance | Yes | Bathing confirmed | ✅ Consistent |
+            | Tobacco/Nicotine | **No** | **Nicotine Patch** | ❌ **MATERIAL** |
+            | Prescription Meds | Yes | Metformin, etc. | ✅ Consistent |
+            """)
 
-            c1, c2 = st.columns([10, 1])
-            with c1:
-                st.markdown('<span><span style="color:#EF4444">!</span> <b>Signatures & Authorizations</b><br><small style="color:#C2410C; margin-left:18px;">3 / 5 signed (HIPAA & Applicant missing)</small></span>', unsafe_allow_html=True)
-            with c2:
-                if st.button("View >", key="view_sig"):
-                    st.session_state["current_view"] = "ACORD Application" # Or another appropriate tab if available
-                    st.rerun()
+            st.write("### Diabetes & Clinical Status")
+            col_cl1, col_cl2 = st.columns(2)
+            with col_cl1:
+                st.markdown("""
+                <div class="status-card" style="border-left: 5px solid #EF4444;">
+                    <div style="font-weight: 600;">Metabolic Control</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; margin-top: 8px;">HbA1c: 8.2% <small>(High)</small></div>
+                    <div style="font-size: 1.2rem; font-weight: 700;">Glucose: 168 mg/dL</div>
+                    <div style="margin-top: 8px; font-size: 0.85rem; color: #64748B;">Med adherence: Moderate (2 late refills)</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_cl2:
+                st.markdown("""
+                <div class="status-card" style="border-left: 5px solid #F59E0B;">
+                    <div style="font-weight: 600;">Cardiovascular</div>
+                    <div style="font-size: 1.2rem; font-weight: 700; margin-top: 8px;">BP: 152/92 <small>(Stage 2 HTN)</small></div>
+                    <div style="font-size: 1.2rem; font-weight: 700;">BMI: 29.8 <small>(Overweight)</small></div>
+                    <div style="margin-top: 8px; font-size: 0.85rem; color: #64748B;">eGFR: 72 (Mildly reduced)</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-            st.write("") # Spacer
+        elif active_tab == tab_names[3]: # Functional
+            st.write("### ADL/IADL Summary — Cross-Source")
+            st.markdown("""
+            | Function | Application | APS/PCP | Interview | Status |
+            |---|---|---|---|---|
+            | Bathing | Needs (checked) | Assist needed | 2-3x/week | ✅ Consistent |
+            | Dressing | Not checked | Independent | Independent | ✅ Consistent |
+            | Toileting | Not checked | Independent | Independent | ✅ Consistent |
+            | Medications | — | Self-manages | Occasional miss | ⚠️ Minor Gap |
+            """)
 
-            c1, c2 = st.columns([10, 1])
-            with c1:
-                st.markdown('<span><span style="color:#EF4444">!</span> <b>NY Addendums</b><br><small style="color:#C2410C; margin-left:18px;">Missing Home Care Disclosure & Replacement Notice</small></span>', unsafe_allow_html=True)
-            with c2:
-                if st.button("View >", key="view_ny"):
-                    st.session_state["current_view"] = "ACORD Application"
-                    st.rerun()
-
-        # Validation Card for Genworth
-        st.markdown("""
-        <div class="status-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight: bold; font-size: 1.1rem;">Validation Checks</span>
-                <span class="badge-red">2 / 4 checks passed</span>
+            st.write("### Fall Risk Profile")
+            st.markdown("""
+            <div class="status-card" style="background-color: #FFFBEB; border: 1px solid #FCD34D;">
+                <p>⚠️ <b>Documented Fall (09/2025)</b> - Not disclosed on application</p>
+                <p>⚠️ <b>Dizziness & Balance concerns</b> noted by PCP</p>
+                <p>⚠️ <b>Environmental Risk:</b> No grab bars in shower</p>
             </div>
-            <hr style="border: 0.5px solid #F1F5F9; margin: 20px 0;">
-            <p>✅ <b>Insured name validation</b><br><small style="color:#64748B; margin-left:25px;">Validating if all documents belong to Jordan A. Taylor</small></p>
-            <p style="color: #EF4444;">❌ <b>SSN Format validation</b><br><small style="color:#64748B; margin-left:25px;">SSN invalid format — only 8 digits (123-45-678)</small></p>
-            <p style="color: #EF4444;">❌ <b>Bank Routing number validation</b><br><small style="color:#64748B; margin-left:25px;">Bank routing number invalid — only 8 digits (02100002)</small></p>
-            <p>✅ <b>Email domain check</b><br><small style="color:#64748B; margin-left:25px;">Email format is non-standard but recognizable</small></p>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+
+        elif active_tab == tab_names[4]: # Product
+            st.write("### Product & Coverage Design")
+            st.markdown("""
+            | Election | Value | Status |
+            |---|---|---|
+            | Plan Type | Home Care Only | ✅ Valid; Disclosure Required |
+            | Daily Benefit | $200/day | ✅ |
+            | Benefit Period | 5 years | ✅ |
+            | Elimination | 90 days | ✅ |
+            | Inflation | 3% Compound | ✅ Appropriate (age 64) |
+            """)
+
+            st.write("### Replacement & Suitability")
+            col_s1, col_s2 = st.columns(2)
+            with col_s1:
+                st.markdown("""
+                <div class="status-card">
+                    <div style="font-weight: 600;">Replacement Flags</div>
+                    <div style="margin-top: 8px; color: #EF4444;">❌ Existing Co/Policy # missing</div>
+                    <div style="color: #EF4444;">❌ Replacement reason blank</div>
+                    <div style="color: #EF4444;">❌ NY Replacement Notice missing</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with col_s2:
+                st.markdown("""
+                <div class="status-card">
+                    <div style="font-weight: 600;">Financial Suitability</div>
+                    <div style="margin-top: 8px; color: #EF4444;">❌ Self-reported NOT affordable</div>
+                    <div style="color: #EF4444;">❌ Hardship explanation blank</div>
+                    <div style="color: #EF4444;">❌ Suitability Ack. missing</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        elif active_tab == tab_names[5]: # Payment
+            st.write("### Payment Setup Review")
+            st.markdown("""
+            | Item | Value | Status |
+            |---|---|---|
+            | Bank Name | Metro National Bank | ✅ |
+            | Routing # | 02100002 | ❌ **Invalid (8 digits)** |
+            | Account # | 00987654321 | ✅ |
+            | EFT Audit | Missing User Signature | ❌ |
+            """)
+
+            st.write("### Authorization Status")
+            st.markdown("""
+            <div class="status-card">
+                <p>❌ <b>HIPAA Authorization:</b> Not signed | 🔴 Critical</p>
+                <p>❌ <b>Applicant Signature:</b> Missing | 🔴 Critical</p>
+                <p>✅ <b>Fraud Warning:</b> Acknowledged</p>
+                <p>✅ <b>Privacy Notice:</b> Acknowledged</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        elif active_tab == tab_names[6]: # Risk
+            st.write("### Priority 1 Action Items (Critical)")
+            items = [
+                "Obtain applicant e-signature on application",
+                "Obtain signed HIPAA Authorization",
+                "Attach & sign NY Home Care Disclosure",
+                "Attach & sign NY Replacement Notice",
+                "Provide existing LTC policy details & replacement reason",
+                "Provide Sec. 5A Prescription list",
+                "Provide Bathing ADL narrative",
+                "Provide Advisor NPN/License number"
+            ]
+            for item in items:
+                st.markdown(f"🔴 **{item}**")
+
+            st.write("### Underwriting Risk Profile")
+            st.markdown("""
+            | Risk Domain | Level | Key Drivers |
+            |---|---|---|
+            | Functional | 🟡 Moderate | Bathing impairment; Fall history |
+            | Medical | 🟠 Moderate-High | A1c 8.2%; HTN uncontrolled |
+            | Misrepresentation | 🔴 High | Tobacco/NRT discrepancy |
+            | Compliance | 🔴 High | Missing signatures/NY forms |
+            """)
 
 def show_emails_page():
     st.subheader("Emails")

@@ -93,34 +93,52 @@ def show_disturbancies_page():
     else:
         anomalies = [
             {
-                "title": "Incomplete Applicant Details",
+                "title": "Material Misrepresentation: Tobacco/Nicotine",
                 "severity": "CRITICAL",
-                "desc": "SSN is in an invalid format (8 digits: 123-45-678). Applicant signature is missing from the main application and HIPAA authorization.",
-                "icon": "👤"
+                "desc": "Application states 'No' for tobacco/nicotine use in past 12 months, but Rx History shows nicotine patch claims as recent as 10/2025. Material to underwriting and rates.",
+                "icon": "⚠️"
             },
             {
-                "title": "Payment Information Errors",
+                "title": "Unsigned Application & HIPAA",
                 "severity": "CRITICAL",
-                "desc": "Bank routing number (02100002) is invalid (only 8 digits). Premium marked as 'affordable' = NO without required explanation.",
+                "desc": "Applicant signature is missing from the main application, and the HIPAA Authorization is not executed. Legal and carrier compliance gap.",
+                "icon": "✍️"
+            },
+            {
+                "title": "Missing NY State Addendums",
+                "severity": "CRITICAL",
+                "desc": "Required NY Home Care Disclosure and Replacement Notice are missing or not executed. Regulatory blocker for New York state application.",
+                "icon": "🗽"
+            },
+            {
+                "title": "Data Integrity: Invalid SSN & Routing #",
+                "severity": "CRITICAL",
+                "desc": "SSN has only 8 digits (123-45-678). Bank routing number (02100002) is also 8 digits. Both require 9 digits for valid processing.",
+                "icon": "🆔"
+            },
+            {
+                "title": "Disclosure Gap: Recent Fall History",
+                "severity": "MAJOR",
+                "desc": "APS records a fall in the shower (09/2025) and reported dizziness, which were not disclosed on the application. Elevates functional risk profile.",
+                "icon": "♿"
+            },
+            {
+                "title": "Missing Medical & ADL Detail",
+                "severity": "MAJOR",
+                "desc": "Prescription medication list (Sec. 5A) was not provided despite 'Yes' answer. ADL 'Bathing' assistance noted but required narrative description is missing.",
+                "icon": "📋"
+            },
+            {
+                "title": "Suitability & Hardship Concern",
+                "severity": "MAJOR",
+                "desc": "Premium marked as NOT affordable without hardship, but required explanation is blank. Suitability acknowledgement missing for NY compliance.",
                 "icon": "💰"
             },
             {
-                "title": "Missing Medical Documentation",
+                "title": "Clinical Flag: Suboptimal Diabetes Control",
                 "severity": "MAJOR",
-                "desc": "Applicant answered YES to prescription medications but did not provide the required medication list (name, dosage, condition).",
-                "icon": "💊"
-            },
-            {
-                "title": "Functional Assessment Gap",
-                "severity": "MAJOR",
-                "desc": "ADL 'Bathing' was selected, but no narrative was provided describing the frequency or nature of assistance required.",
-                "icon": "♿"
-            },
-             {
-                "title": "Missing NY State Addendums",
-                "severity": "CRITICAL",
-                "desc": "The NY Home Care Disclosure and Replacement Notice are either not attached or not executed.",
-                "icon": "🗽"
+                "desc": "HbA1c of 8.2% (11/2025) indicates suboptimal control. BP (152/92) also above goal. High risk for functional decline when combined with hypertension.",
+                "icon": "🩺"
             }
         ]
 

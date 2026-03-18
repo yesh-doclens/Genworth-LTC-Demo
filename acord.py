@@ -28,9 +28,21 @@ def show_acord_page():
     with open(acord_path, "r") as f:
         md = f.read()
 
-    tab1, tab2, tab3 = st.tabs(["📊 **Overview**", "📄 **PDF & Data View**", "💬 **Chat**"])
+    tab_names = ["📊 Overview", "📄 PDF & Data View", "💬 Chat"]
+    if "acord_active_tab" not in st.session_state:
+        st.session_state["acord_active_tab"] = tab_names[0]
+        
+    tabs_cols = st.columns([1, 1, 1, 4]) # 4 for spacing
+    for idx, name in enumerate(tab_names):
+        with tabs_cols[idx]:
+            is_active = st.session_state["acord_active_tab"] == name
+            if st.button(name, key=f"acord_tab_{idx}", use_container_width=True, type="secondary" if not is_active else "primary"):
+                st.session_state["acord_active_tab"] = name
+                st.rerun()
+
+    active_tab = st.session_state["acord_active_tab"]
     
-    with tab1:
+    if active_tab == tab_names[0]: # Overview
         st.write("### Application Overview")
         
         if genworth_page:
@@ -240,7 +252,7 @@ def show_acord_page():
                     </div>
                     """, unsafe_allow_html=True)
 
-    with tab2:
+    elif active_tab == tab_names[1]: # PDF & Data View
         col_header, col_toggle = st.columns([2, 1])
         with col_toggle:
             view_mode = st.segmented_control(
@@ -271,7 +283,7 @@ def show_acord_page():
             with st.container(height=800):
                 st.markdown(md)
 
-    with tab3:
+    elif active_tab == tab_names[2]: # Chat
         col1, col2 = st.columns(spec=[1, 1], gap="medium")
         with col1:
             # st.markdown("### Extracted Reference")

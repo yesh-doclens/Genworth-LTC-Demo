@@ -3,6 +3,7 @@ import json
 import re
 from langchain_aws import ChatBedrockConverse
 from main import ask_agent, configure_agent
+import os 
 
 def get_llm(model_id, credentials):
     return ChatBedrockConverse(
@@ -20,29 +21,20 @@ def classify_query(query, credentials):
     
     prompt = f"""
     Classify the following user query into one of these categories:
-    1. ACORD_APPLICATION: Related to general policy, agency, or applicant info in the ACORD form.
-    2. LOSS_RUN: Related to claims history, loss trends, or specific past incidents.
-    3. SUPPLEMENTAL_APPLICATION: Related to specific operational details, risk/safety questions from the supplemental form.
-    4. EMAILS: Related to communication, attachments, or who sent what.
-    5. ACCOUNT_RESEARCH: Related to website summary, reviews (employee/customer), OSHA, SAFER (DOT), or SOS (Secretary of State) data.
-    6. COMPLETENESS_CHECK: Related to missing fields, check status, or validation results.
-    7. DISCREPANCIES: Related to anomalies, inconsistencies, or flagged issues.
-    8. GENERAL: Anything else.
+    1. APPLICATION_FORM: Related to applicant info, demographics, or specific answers in the main Application Form.
+    2. MEDICAL_RECORDS: Related to supporting documents, APS, Lab results, Rx history, or Functional interview details.
+    3. REVIEW_REPORT: Related to completeness, discrepancies, NIGO items, action items, suitability, or underwriting risk profile.
+    4. EMAILS: Related to communication or submission notes.
+    5. GENERAL: Anything else.
 
     User Query: "{query}"
 
-    If the category is LOSS_RUN, also try to extract:
-    - medical_conditions: list of terms (e.g., ["Fractures", "Death"])
-    - min_incurred: number
-    - max_incurred: number
-
-    Return ONLY a JSON object with "category" and optional "filters" (for LOSS_RUN).
-    Example: {{"category": "LOSS_RUN", "filters": {{"medical_conditions": ["Fractures"], "min_incurred": 10000}}}}
+    Return ONLY a JSON object with "category".
+    Example: {{"category": "MEDICAL_RECORDS"}}
     """
     
     response = llm.invoke(prompt)
     try:
-        # Extract JSON from response content
         json_match = re.search(r'\{.*\}', response.content, re.DOTALL)
         if json_match:
             return json.loads(json_match.group())
@@ -53,15 +45,15 @@ def classify_query(query, credentials):
 def get_tab_context(category, credentials, query, genworth_page=False, filters=None):
     context = ""
     
-    if category == "ACORD_APPLICATION":
+    if category == "APPLICATION_FORM":
         filename = "form_genworth.md" if genworth_page else "acord.md"
-        with open(filename, "r") as f:
-            context = f.read()
+        if os.path.exists(filename):
+            with open(filename, "r") as f:
+                context = f.read()
             
-    elif category == "SUPPLEMENTAL_APPLICATION":
-        # For Genworth, we might just reuse the same form or mark it as N/A
-        with open("application.md", "r") as f:
-            context = f.read()
+    elif category == "MEDICAL_RECORDS":
+        from supporting_docs import get_all_medical_context
+        context = get_all_medical_context()
             
     elif category == "EMAILS":
         if genworth_page:
@@ -74,72 +66,27 @@ def get_tab_context(category, credentials, query, genworth_page=False, filters=N
             Body: Attached is the LTC application for Jordan A. Taylor. Please note the missing HIPAA signature and the SSN format clarification.
             """
         else:
-            context = """
-            Email Summary:
-            From: Sarah Ellis <sarah.ellis@summitpeakins.com>
-            To: Submissions <submissions@doclens.ai>
-            Date: Feb 24, 2026, 10:45 AM
-            Subject: New Commercial Auto Submission - Blue Ridge Office Solution, LLC
-            Body: Please find the submission for Blue Ridge Office Solution, LLC. Includes ACORD 125/137, driver and vehicle lists, loss runs (5 years), and supplemental application.
-            """
+            context = "No email records available for this account."
         
-    elif category == "ACCOUNT_RESEARCH":
+    elif category == "REVIEW_REPORT":
         if genworth_page:
-            context = """
-            Research Data (Jordan A. Taylor):
-            - Identity: Verified Jordan A. Taylor, Resident of NY.
-            - SSN Check: Flagged for invalid format (8 digits).
-            - Credit Inquiry: Moderate risk profile.
-            - Medical MIB: Flagged for 3 recent prescriptions.
-            """
+            review_file = "review/review.md"
+            if os.path.exists(review_file):
+                with open(review_file, "r") as f:
+                    context = f.read()
+            else:
+                context = "Review report data (review.md) not found."
         else:
-            context = """
-            Research Data:
-            - Website Summary: Secure Document Destruction, Waste Removal, LEED Services, Recycling, Composting, Dumpster Rentals.
-            - Employee Reviews: 4.4/5 (90 reviews).
-            - Customer Reviews: 4.2/5 (156 reviews).
-            - OSHA: 12 inspections (5yr), 2 violations, $1,450 penalty.
-            - SAFER (DOT): 882341, SATISFACTORY rating, 24 vehicles.
-            - SOS: Active / Good Standing, Incorporated Jan 15, 1998.
-            """
+            context = "Detailed review report only available for Genworth LTC submissions."
         
-    elif category == "COMPLETENESS_CHECK":
-        if genworth_page:
-            context = """
-            Completeness Status (Genworth/LTC):
-            - Overall: 15 Deficiencies Found.
-            - LTC Application (Jordan Taylor): 16 / 31 core fields present (Red).
-            - Signatures & Authorizations: 3 / 5 signed (HIPAA & Applicant missing).
-            - NY Addendums: Missing Home Care Disclosure & Replacement Notice.
-            - Validation: SSN format check (Failed), Bank routing check (Failed).
-            """
+    elif category == "COMPLETENESS_CHECK" or category == "DISCREPANCIES":
+        # Fallback for old categories if still triggered
+        review_file = "review/review.md"
+        if genworth_page and os.path.exists(review_file):
+            with open(review_file, "r") as f:
+                context = f.read()
         else:
-            context = """
-            Completeness Status:
-            - Overall: 2/3 checks passed.
-            - ACORD: 20/21 fields present (Green).
-            - Supplemental: 12/28 fields present (Orange).
-            - Validation: Insured name validation (Passed), FEIN valid in ACORD (Passed).
-            """
-        
-    elif category == "DISCREPANCIES":
-        if genworth_page:
-            context = """
-            Discrepancies identified (Genworth/LTC):
-            - Critical: Incomplete Applicant Details (SSN 8-digit format, missing signatures).
-            - Critical: Payment Information Errors (Routing 8-digit, affordability explanation missing).
-            - Major: Missing Medical Documentation (Prescription list missing).
-            - Major: Functional Assessment Gap (ADL 'Bathing' frequency missing).
-            - Critical: Missing NY State Addendums (Home Care Disclosure, Replacement Notice).
-            """
-        else:
-            context = """
-            Discrepancies identified:
-            - Critical: Unexpected Premium Drop (45% decrease vs loss runs).
-            - Major: Missing Loss History (2023 gap identifying Jan-Dec 2023).
-            - Minor: Vehicle List Inconsistency (15 in Supplemental vs 14 in ACORD).
-            - Minor: Outdated Safety Manual (Not updated since 2018).
-            """
+            context = "Reference the completeness dashboard for findings."
     
     elif category == "LOSS_RUN":
         # For Genworth/LTC, Loss Runs might not be as relevant or handled separately
