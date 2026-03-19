@@ -180,7 +180,7 @@ def show_dashboard():
         )
         st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
-    search_query = st.text_input("", placeholder="Search Company")
+    search_query = st.text_input("", placeholder="Search Application")
 
     # Mock Data
     if genworth_page:
@@ -195,7 +195,7 @@ def show_dashboard():
         ]
     else:
         data = [
-            {"name": "Genworth Insurance", "docs": "LTC Application, Medical Records", "date": "03/17/2026", "score": 2.1},
+            {"name": "LTC-NY-2026-000174", "docs": "LTC Application, Medical Records", "date": "01/04/2026", "score": 2.1},
         ]
 
     filtered_data = [
@@ -208,7 +208,7 @@ def show_dashboard():
         <table class="dash-table">
             <thead>
                 <tr>
-                    <th style="text-align: center; padding-left: 75px;">Company</th>
+                    <th style="text-align: center; padding-left: 75px;">Application</th>
                     <th style="text-align: center; padding-left: 100px;">Documents Uploaded</th>
                     <th style="text-align: center; padding-left: 50px;">Uploaded At</th>
                     <th style="text-align: center;">Submission Review</th>

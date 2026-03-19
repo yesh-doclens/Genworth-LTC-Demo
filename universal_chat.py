@@ -20,17 +20,23 @@ def classify_query(query, credentials):
     llm = get_llm(haiku_id, credentials)
     
     prompt = f"""
-    Classify the following user query into one of these categories:
-    1. APPLICATION_FORM: Related to applicant info, demographics, or specific answers in the main Application Form.
-    2. MEDICAL_RECORDS: Related to supporting documents, APS, Lab results, Rx history, or Functional interview details.
-    3. REVIEW_REPORT: Related to completeness, discrepancies, NIGO items, action items, suitability, or underwriting risk profile.
-    4. EMAILS: Related to communication or submission notes.
-    5. GENERAL: Anything else.
+    Classify the following user query into one of these specific insurance review categories:
+    1. APPLICATION_FORM: Related to applicant demographics, beneficiary, contact info, or general form data.
+    2. COMPLETENESS: Related to status (IGO/NIGO), missing fields, or general deficiency counts.
+    3. IDENTITY_LEGAL: Related to SSN, DOB, Address verification, Owner vs Insured, or Lapse Designee.
+    4. HEALTH_MEDICAL: Related to health history, tobacco use, HbA1c, lab results, hypertension, or medications.
+    5. FUNCTIONAL_ASSESSMENT: Related to ADLs (Bathing, Dressing, etc.), Fall history, Dizziness, or Home safety.
+    6. PRODUCT_SUITABILITY: Related to NY State forms, Replacement analysis, affordability, or plan elections ($200/day, 5yr period).
+    7. PAYMENT_COMPLIANCE: Related to bank accounts, routing #, HIPAA authorization, or electronic signatures.
+    8. RISK_PROFILE: Related to overall risk level (High/Low), misrepresentation flags, or priority action items for the advisor.
+    9. SUPPORTING_DOCS: Related to guidelines, product guides, or general LTC rules.
+    10. EMAILS: Related to advisor communications or submission notes.
+    11. GENERAL: Anything else.
 
     User Query: "{query}"
 
     Return ONLY a JSON object with "category".
-    Example: {{"category": "MEDICAL_RECORDS"}}
+    Example: {{"category": "HEALTH_MEDICAL"}}
     """
     
     response = llm.invoke(prompt)
@@ -42,6 +48,24 @@ def classify_query(query, credentials):
     except:
         return {"category": "GENERAL"}
 
+def extract_section(text, section_keywords):
+    """Simple extraction helper to pull relevant sections from review.md"""
+    lines = text.split('\n')
+    extracted = []
+    found = False
+    
+    for line in lines:
+        if "## SECTION" in line:
+            if any(key.upper() in line.upper() for key in section_keywords):
+                found = True
+            else:
+                found = False
+        
+        if found:
+            extracted.append(line)
+            
+    return "\n".join(extracted) if extracted else text
+
 def get_tab_context(category, credentials, query, genworth_page=False, filters=None):
     context = ""
     
@@ -51,9 +75,11 @@ def get_tab_context(category, credentials, query, genworth_page=False, filters=N
             with open(filename, "r") as f:
                 context = f.read()
             
-    elif category == "MEDICAL_RECORDS":
+    elif category == "SUPPORTING_DOCS":
         from supporting_docs import get_all_medical_context
+        # Include medical context AND Guideline hint
         context = get_all_medical_context()
+        context += "\n(Guideline Context: Refer to standard LTC Product knowledge for Jordan A. Taylor's case.)"
             
     elif category == "EMAILS":
         if genworth_page:
@@ -68,28 +94,31 @@ def get_tab_context(category, credentials, query, genworth_page=False, filters=N
         else:
             context = "No email records available for this account."
         
-    elif category == "REVIEW_REPORT":
+    elif category in ["COMPLETENESS", "IDENTITY_LEGAL", "HEALTH_MEDICAL", "FUNCTIONAL_ASSESSMENT", "PRODUCT_SUITABILITY", "PAYMENT_COMPLIANCE", "RISK_PROFILE"]:
         if genworth_page:
             review_file = "review/review.md"
             if os.path.exists(review_file):
                 with open(review_file, "r") as f:
-                    context = f.read()
+                    full_review = f.read()
+                
+                # Map categories to section keywords
+                mapping = {
+                    "COMPLETENESS": ["SECTION 1"],
+                    "IDENTITY_LEGAL": ["SECTION 2"],
+                    "HEALTH_MEDICAL": ["SECTION 3"],
+                    "FUNCTIONAL_ASSESSMENT": ["SECTION 4"],
+                    "PRODUCT_SUITABILITY": ["SECTION 5", "SECTION 6", "SECTION 7"],
+                    "PAYMENT_COMPLIANCE": ["SECTION 8", "SECTION 9"],
+                    "RISK_PROFILE": ["SECTION 11", "SECTION 10"]
+                }
+                
+                context = extract_section(full_review, mapping.get(category, []))
             else:
                 context = "Review report data (review.md) not found."
         else:
             context = "Detailed review report only available for Genworth LTC submissions."
-        
-    elif category == "COMPLETENESS_CHECK" or category == "DISCREPANCIES":
-        # Fallback for old categories if still triggered
-        review_file = "review/review.md"
-        if genworth_page and os.path.exists(review_file):
-            with open(review_file, "r") as f:
-                context = f.read()
-        else:
-            context = "Reference the completeness dashboard for findings."
     
     elif category == "LOSS_RUN":
-        # For Genworth/LTC, Loss Runs might not be as relevant or handled separately
         if genworth_page:
              context = "Loss run data is not available for this individual life/LTC submission."
         else:

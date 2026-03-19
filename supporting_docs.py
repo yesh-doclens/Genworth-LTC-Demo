@@ -39,9 +39,9 @@ def show_supporting_docs_page():
 
     # st.subheader("Supporting Documents")
     
-    # Top-level Tabs for Medical vs Financial
+    # Top-level Tabs for Medical vs Financial vs Guidelines
     st.markdown('<div class="full-width-tabs">', unsafe_allow_html=True)
-    top_tab1, top_tab2 = st.tabs(["🩺 **Medical Documents**", "💰 **Financial Documents**"])
+    top_tab1, top_tab2, top_tab3 = st.tabs(["🩺 **Medical Documents**", "💰 **Financial Documents**", "📄 **Guideline Documents**"])
     st.markdown('</div>', unsafe_allow_html=True)
 
     with top_tab1:
@@ -181,7 +181,7 @@ def show_supporting_docs_page():
         with tab3:
             col1, col2 = st.columns(spec=[1, 1], gap="medium")
             with col1:
-                st.write("### Reference Document")
+                # st.write("### Reference Document")
                 with st.container(height=800):
                     st.markdown(selected_md)
             with col2:
@@ -206,5 +206,51 @@ def show_supporting_docs_page():
                         st.markdown(message["content"])
 
     with top_tab2:
-        st.write("### Financial Documents")
-        st.info("No financial documents have been uploaded for this submission yet.")
+        st.info("No financial documents have been uploaded")
+    with top_tab3:
+        st.write("### Guideline Documents")
+        from streamlit_pdf_viewer import pdf_viewer
+        
+        guideline_pdf = os.path.join("guidelines", "LTC_Product_Guide.pdf")
+        
+        col_left, col_right = st.columns([1, 1], gap="medium")
+        
+        with col_left:
+            st.markdown("#### Product Guide")
+            if os.path.exists(guideline_pdf):
+                pdf_viewer(guideline_pdf, height=850)
+            else:
+                st.error(f"Guideline document not found at {guideline_pdf}")
+                
+        with col_right:
+            st.markdown("#### Guideline Chat")
+            st.caption("Ask questions about LTC product rules, age requirements, and coverage limits.")
+            
+            if "guideline_chat_history" not in st.session_state:
+                st.session_state["guideline_chat_history"] = []
+                
+            query = st.chat_input("Ask a guideline question...", key="guideline_chat_input")
+            
+            if query:
+                with st.spinner("Consulting guidelines..."):
+                    # For now, use standard LLM knowledge as requested
+                    sonnet_id = "us.anthropic.claude-3-5-sonnet-20241022-v2:0"
+                    llm = get_llm(sonnet_id, st.session_state["aws_credentials"])
+                    
+                    prompt = f"""
+                    You are an expert on Long-Term Care (LTC) insurance products and underwriting guidelines.
+                    Answer the user's question based on standard LTC product knowledge and general insurance principles.
+                    
+                    User Query: "{query}"
+                    
+                    Provide a detailed, professional response using markdown formatting.
+                    """
+                    response = llm.invoke(prompt)
+                    st.session_state["guideline_chat_history"].append({"role": "user", "content": query})
+                    st.session_state["guideline_chat_history"].append({"role": "assistant", "content": response.content})
+            
+            # Display chat history
+            with st.container(height=750):
+                for message in reversed(st.session_state["guideline_chat_history"]):
+                    with st.chat_message(message["role"]):
+                        st.markdown(message["content"])

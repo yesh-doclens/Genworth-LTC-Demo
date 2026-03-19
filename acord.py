@@ -238,8 +238,8 @@ def show_acord_page():
             st.write("#### Deficiencies Summary")
             cols_def = st.columns(4)
             deficiencies = [
-                ("Critical Issues", "14"),
-                ("Minor Issues", "1"),
+                ("Critical Issues", "13"),
+                ("Major Issues", "2"),
                 ("Total Deficiencies", "15"),
                 ("Action Required", "Resolve NIGO")
             ]

@@ -213,7 +213,7 @@ def show_research_page():
         <div style="display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 2rem; font-weight: 800;">{st.session_state["selected_submission"]}</span>
         </div>
-        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px; ">SUB-000001 • 24 Feb 2026</div>
+        <div style="font-size: 0.85rem; color: #64748B; margin-top: 4px; ">SUB-000001 • 04 Jan 2026</div>
         <br><br>
         """, unsafe_allow_html=True)
     
